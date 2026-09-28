@@ -82,7 +82,7 @@ function need(fn){
 const back=()=>'<button class="b" onclick="home()">ホームへ戻る</button>';
 let NEXT=null;
 function lock(fn,msg){NEXT=fn;
- show('<h2>合言葉の入力</h2><p>doushikai3399</p><input type="password" id="cd" autocomplete="off" autocapitalize="off">'+(msg?'<p class="err">'+msg+'</p>':'')+'<button class="b p" onclick="unlock()">確認</button>'+back());
+ show('<h2>合言葉の入力</h2><p>指定されたパスワードを入力してください</p><input type="doushikai3399" id="cd" autocomplete="off" autocapitalize="off">'+(msg?'<p class="err">'+msg+'</p>':'')+'<button class="b p" onclick="unlock()">確認</button>'+back());
 }
 async function unlock(){
  S.code=$("cd").value.trim();if(!S.code)return;
