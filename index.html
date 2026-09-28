@@ -54,7 +54,7 @@ const W=["明るく、楽しい気分で過ごした","落ち着いた、リラ�
 const STEPS=[{t:"age"},{t:"care"},...A.map((_,i)=>({t:"a",i})),...W.map((_,i)=>({t:"w",i}))];
 const BA=[[7,14],[15,21],[22,28],[29,35]],BW=[[0,6],[7,13],[14,19],[20,25]];
 
-let S={code:sessionStorage.getItem("code")||"",users:[],set:{},recs:{},cur:{},fix:false};
+let S={code:(()=>{try{return sessionStorage.getItem("code")||""}catch(e){return ""}})(),users:[],set:{},recs:{},cur:{},fix:false};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const show=h=>{$("app").innerHTML='<div class="card">'+h+'</div>';window.scrollTo(0,0)};
@@ -77,7 +77,7 @@ function need(fn){
  if(!SHEET_API_URL){show('<p class="err">HTMLの SHEET_API_URL に Apps Script のURLを貼り付けてください。</p>'+back());return}
  if(!S.code)return lock(fn);
  show("<p>読み込み中…</p>");
- load().then(fn).catch(e=>{if(e.message==="auth"){S.code="";sessionStorage.removeItem("code");lock(fn)}else show('<p class="err">通信に失敗しました。</p><button class="b" onclick="home()">ホームへ</button>')});
+ load().then(fn).catch(e=>{if(e.message==="auth"){S.code="";sessionStorage.removeItem("code");lock(fn)}else show('<p class="err">通信に失敗しました。（'+esc(e.message||e)+'）</p><button class="b" onclick="home()">ホームへ</button>')});
 }
 const back=()=>'<button class="b" onclick="home()">ホームへ戻る</button>';
 let NEXT=null;
@@ -86,8 +86,10 @@ function lock(fn,msg){NEXT=fn;
 }
 async function unlock(){
  S.code=$("cd").value.trim();if(!S.code)return;
- try{await load();sessionStorage.setItem("code",S.code);NEXT&&NEXT()}
- catch(e){S.code="";lock(NEXT,e.message==="auth"?"合言葉が違います。":"通信に失敗しました。")}
+ try{await load()}
+ catch(e){S.code="";lock(NEXT,e.message==="auth"?"合言葉が違います。":"通信に失敗しました。（"+esc(e.message||e)+"）");return}
+ try{sessionStorage.setItem("code",S.code)}catch(e){}
+ if(NEXT)NEXT();
 }
 
 function home(){S.fix=false;
