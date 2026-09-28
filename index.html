@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>利用者向け調査（生産性向上推進体制加算）</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--m:#33544A;--bg:#E4EDE6;--g:#B9812F}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:'Noto Sans JP',sans-serif;color:#22312c;font-size:18px;line-height:1.6}
+h1,h2,h3{font-family:'Zen Maru Gothic',sans-serif;color:var(--m);margin:.3em 0}
+header{background:var(--m);color:#fff;padding:14px 20px;font-family:'Zen Maru Gothic',sans-serif;font-weight:700}
+header small{display:block;font-weight:500;opacity:.85;font-size:14px}
+main{max-width:780px;margin:20px auto;padding:0 14px 40px}
+.card{background:#fff;border-radius:18px;padding:24px;box-shadow:0 2px 10px #0002;animation:f .35s}
+@keyframes f{from{opacity:0}to{opacity:1}}
+.b{display:flex;align-items:center;gap:12px;width:100%;margin:9px 0;padding:15px 18px;border:2px solid var(--m);border-radius:14px;background:#fff;color:var(--m);font:inherit;font-weight:500;text-align:left;cursor:pointer}
+.b:active,.b.sel{background:var(--m);color:#fff}
+.b.p{background:var(--m);color:#fff;justify-content:center;font-weight:700}
+.b.g{border-color:var(--g);color:var(--g);justify-content:center}
+.b.s{width:auto;display:inline-flex;padding:4px 12px;font-size:14px;margin:0}
+.n{flex:none;width:32px;height:32px;border-radius:50%;background:var(--bg);color:var(--m);display:grid;place-items:center;font-weight:700}
+.b.sel .n,.b:active .n{background:#fff}
+.bar{height:12px;background:var(--bg);border-radius:8px;overflow:hidden;margin:6px 0 16px}
+.bar i{display:block;height:100%;background:var(--g)}
+.note{background:#FBF5E9;border-left:5px solid var(--g);padding:8px 12px;font-size:15px;margin:10px 0;border-radius:6px}
+.sec{color:var(--g);font-weight:700;font-size:15px}
+input[type=text],input[type=number],input[type=password],input[type=month]{width:100%;padding:13px;font:inherit;border:2px solid #b7c9bd;border-radius:12px;margin:6px 0}
+.err{color:#b3261e;font-weight:700}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px;margin:8px 0 22px}
+th,td{border:1px solid #b7c9bd;padding:6px 8px;text-align:center;white-space:nowrap}
+th{background:var(--bg);color:var(--m)}
+td.l{text-align:left}
+.row{display:flex;gap:10px}.row .b{justify-content:center}
+</style></head><body>
+<header>利用者向け調査票<small id="fac"></small></header>
+<main><div id="app"></div></main>
+<script>
+/* ★設定：Apps ScriptのウェブアプリURLをここに1箇所だけ貼り付けます */
+const SHEET_API_URL = "";
+const FACILITY = "道志会 特別養護老人ホーム";
+
+const SC5=["いつも","ほとんどいつも","半分以上の期間を","半分以下の期間を","ほんのたまに","まったくない"];
+const CARE=["要介護１","要介護２","要介護３","要介護４","要介護５","自立・要支援","その他（要支援・区分申請中等）"];
+const A=[
+{k:"１-①",t:"身近なもの（たとえば、メガネや入れ歯、財布、上着、鍵など）を置いた場所を覚えていますか",n:"介護者が一緒に探しているなど、一人で探す様子が分からない場合は、もし一人で探すとしたらどうかを想定して評価してください",o:["常に覚えている","たまに（週１回程度）忘れることはあるが、考えることで思い出せる","思い出せないこともあるが、きっかけがあれば自分で思い出すこともある（思い出せることと思い出せないことが同じくらいの頻度）","きっかけがあっても、自分では置いた場所をほとんど思い出せない","忘れたこと自体を認識していない"]},
+{k:"１-②",t:"身の回りに起こった日常的な出来事（たとえば、食事、入浴、リハビリテーションや外出など）をどのくらいの期間、覚えていますか",n:"最近1週間の様子を評価してください",o:["１週間前のことを覚えている","１週間前のことは覚えていないが、数日前のことは覚えている","数日前のことは覚えていないが、昨日のことは覚えている","昨日のことは覚えていないが、半日前のことは覚えている","全く覚えていられない"]},
+{k:"②",t:"現在の日付や場所等についてどの程度認識できますか",n:"上位レベルのことと下位レベルのことが両方でき、上位と下位の間の項目ができない場合には、上位レベルのほうを選び回答してください（例：１と３に該当し、２に該当しない場合⇒１を選択する）",o:["年月日はわかる（±１日の誤差は許容する）","年月日はわからないが、現在いる場所の種類はわかる","場所の名称や種類はわからないが、その場にいる人が誰だかわかる（家族であるか、介護者であるか、看護師であるか等）","その場にいる人が誰だかわからないが、自分の名前はわかる","自分の名前がわからない"]},
+{k:"③",t:"誰かに何かを伝えたいと思っているとき、どれくらい会話でそれを伝えることができますか",n:"「会話ができる」とは、2者の意思が互いに疎通できている状態を指します",o:["会話に支障がない（「○○だから、××である」といった2つ以上の情報がつながった話をすることができる）","複雑な会話はできないが、普通に会話はできる（「○○だから、××である」といった2つ以上の情報がつながった話をすることはできない）","普通に会話はできないが、具体的な欲求を伝えることはできる（「痛い」「お腹が空いた」などの具体的な要求しか伝えられない）","会話が成り立たないが、発語はある（発語はあるが、簡単な質問に対して適切な回答ができなかったり、何を聞いても「うん」とだけ答える）","発語がなく、無言である"]},
+{k:"④",t:"一人で服薬ができますか",n:"服薬していなかったり、介護者が先に準備しているなど、実際の服薬能力が分からない場合は、一人で服薬する場合を想定して評価してください",o:["自分で正しく服薬できる","自分で用意して服薬できるが、たまに（週１回程度）服薬し忘れることがある","２回に１回は服薬を忘れる","常に薬を手渡しすることが必要である","服薬し終わるまで介助・みまもりが必要である"]},
+{k:"⑤",t:"一人で着替えることができますか",n:"まひ等により身体が不自由で介助が必要な場合は、障害がない場合での衣服の機能への理解度を想定して評価してください",o:["季節や気温に応じた服装を選び、着脱衣ができる","季節や気温に応じた服装選びはできないが、着る順番や方法は理解し、自分で着脱衣ができる","促してもらえれば、自分で着脱衣ができる","着脱衣の一部を介護者が行う必要がある","着脱衣の全てを常に介護者が行う必要がある"]},
+{k:"⑥",t:"テレビやエアコンなどの電化製品を操作できますか",n:"テレビが無い場合は、エアコンで評価してください。いずれもない場合は、電子レンジ、ラジオなどの電化製品の操作で評価してください",o:["自由に操作できる（「複雑な操作」も自分で考えて行うことができる）","チャンネルの順送りなど普段している操作はできる（「単純な操作」であれば自分で行うことができる）","操作間違いが多いが、操作方法を教えてもらえれば使える（「単純な操作」が分からないことがあるが、教えれば自分で操作することができる）","リモコンを認識しているが、リモコンの使い方が全く分からない（何をする電化製品かは分かるが、操作を教えても自分で操作することはできない）","リモコンが何をするものか分からない"]}];
+const W=["明るく、楽しい気分で過ごした","落ち着いた、リラックスした気分で過ごした","意欲的で、活動的に過ごした","ぐっすりと休め、気持ちよく目覚めた","日常生活の中に、興味のあることがたくさんあった"];
+const STEPS=[{t:"age"},{t:"care"},...A.map((_,i)=>({t:"a",i})),...W.map((_,i)=>({t:"w",i}))];
+const BA=[[7,14],[15,21],[22,28],[29,35]],BW=[[0,6],[7,13],[14,19],[20,25]];
+
+let S={code:sessionStorage.getItem("code")||"",users:[],set:{},recs:{},cur:{},fix:false};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const show=h=>{$("app").innerHTML='<div class="card">'+h+'</div>';window.scrollTo(0,0)};
+$("fac").textContent=FACILITY;
+const sum=a=>a.reduce((x,y)=>x+y,0);
+const today=()=>new Date().toLocaleDateString("sv-SE");
+const ymNow=()=>today().slice(0,7);
+function fy(ym){const s=S.set.startYM;if(!s)return null;const[y,m]=ym.split("-").map(Number),[sy,sm]=s.split("-").map(Number);return Math.floor(((y-sy)*12+m-sm)/12)}
+const fyL=n=>n==null?"":n<0?"算定開始前":"第"+(n+1)+"年度";
+
+async function api(p){const r=await fetch(SHEET_API_URL+"?"+new URLSearchParams(p));return r.json()}
+async function setKV(key,value){const r=await fetch(SHEET_API_URL,{method:"POST",body:JSON.stringify({code:S.code,action:"set",key,value})});const j=await r.json();if(!j.ok)throw new Error(j.error||"save")}
+async function load(){
+ const j=await api({action:"all",code:S.code});
+ if(!j.ok)throw new Error(j.error||"load");
+ const d=j.data||{};S.users=d.users||[];S.set=d.settings||{};S.recs={};
+ Object.keys(d).forEach(k=>{if(k.startsWith("rec:"))S.recs[k]=d[k]});
+}
+function need(fn){
+ if(!SHEET_API_URL){show('<p class="err">HTMLの SHEET_API_URL に Apps Script のURLを貼り付けてください。</p>'+back());return}
+ if(!S.code)return lock(fn);
+ show("<p>読み込み中…</p>");
+ load().then(fn).catch(e=>{if(e.message==="auth"){S.code="";sessionStorage.removeItem("code");lock(fn)}else show('<p class="err">通信に失敗しました。</p><button class="b" onclick="home()">ホームへ</button>')});
+}
+const back=()=>'<button class="b" onclick="home()">ホームへ戻る</button>';
+let NEXT=null;
+function lock(fn,msg){NEXT=fn;
+ show('<h2>合言葉の入力</h2><p>施設で決めた合言葉を入力してください。</p><input type="password" id="cd" autocomplete="off" autocapitalize="off">'+(msg?'<p class="err">'+msg+'</p>':'')+'<button class="b p" onclick="unlock()">確認</button>'+back());
+}
+async function unlock(){
+ S.code=$("cd").value.trim();if(!S.code)return;
+ try{await load();sessionStorage.setItem("code",S.code);NEXT&&NEXT()}
+ catch(e){S.code="";lock(NEXT,e.message==="auth"?"合言葉が違います。":"通信に失敗しました。")}
+}
+
+function home(){S.fix=false;
+ show('<h2>ホーム</h2><p>ボタンを選んでください。</p><button class="b p" onclick="need(users)">新しく入力する</button><button class="b" onclick="need(results)">これまでの結果を見る</button><button class="b g" onclick="need(settings)">算定開始年月の設定</button>');
+}
+function settings(){
+ show('<h2>算定開始年月の設定</h2><p>加算の算定を開始する年月です。ここを基準に「第◯年度」を自動計算します。</p><input type="month" id="sm" value="'+esc(S.set.startYM||"")+'"><button class="b p" onclick="saveSet()">保存</button>'+back());
+}
+async function saveSet(){const v=$("sm").value;if(!v)return;S.set={startYM:v};try{await setKV("settings",S.set);home()}catch(e){alert("保存に失敗しました")}}
+
+function users(){
+ let h='<h2>利用者を選ぶ</h2>'+S.users.map(u=>'<button class="b" onclick="pick(\''+u.id+'\')">'+esc(u.name)+(u.no?'<small>（番号：'+esc(u.no)+'）</small>':'')+'</button>').join("");
+ h+='<button class="b g" onclick="newUser()">＋ 新しい利用者を追加</button>'+back();show(h);
+}
+let NS="";
+function newUser(){NS="";
+ show('<h2>利用者を追加</h2>氏名<input type="text" id="un">利用者番号（任意）<input type="text" id="uno">性別<div class="row"><button class="b" id="s1" onclick="sx(1)">男</button><button class="b" id="s2" onclick="sx(2)">女</button></div><button class="b p" onclick="addUser()">保存</button><button class="b" onclick="users()">戻る</button>');
+}
+function sx(v){NS=v;$("s1").classList.toggle("sel",v==1);$("s2").classList.toggle("sel",v==2)}
+async function addUser(){
+ const name=$("un").value.trim();if(!name||!NS){alert("氏名と性別を入力してください");return}
+ S.users.push({id:"u"+Date.now(),name,no:$("uno").value.trim(),sex:NS});
+ try{await setKV("users",S.users);users()}catch(e){S.users.pop();alert("保存に失敗しました")}
+}
+function pick(id){S.cur={uid:id,a:[],w:[]};ymSel()}
+
+function ymSel(){
+ if(!S.set.startYM){show('<h2>実施年月</h2><p class="err">先に「算定開始年月」を設定してください。</p><button class="b g" onclick="settings()">算定開始年月を設定する</button>'+back());return}
+ const v=S.cur.ym||ymNow();
+ show('<h2>実施年月を選ぶ</h2><input type="month" id="ym" value="'+v+'" oninput="ymChk()"><h3 id="fyl"></h3><p id="ex" class="note" style="display:none">この月は入力済みです。保存すると上書きされます。</p><button class="b p" onclick="ymGo()">次へ</button><button class="b" onclick="users()">戻る</button>');ymChk();
+}
+function ymChk(){const v=$("ym").value;$("fyl").textContent=v?fyL(fy(v)):"";$("ex").style.display=S.recs["rec:"+S.cur.uid+"_"+v]?"block":"none"}
+function ymGo(){const v=$("ym").value;if(!v)return;S.cur.ym=v;const o=S.recs["rec:"+S.cur.uid+"_"+v];
+ if(o){S.cur.age=o.age;S.cur.care=o.care;S.cur.a=o.a.slice();S.cur.w=o.w.slice()}
+ step(0)}
+
+function bar(i){return '<div class="sec">'+(i+1)+' / '+STEPS.length+' 問</div><div class="bar"><i style="width:'+((i+1)/STEPS.length*100)+'%"></i></div>'}
+function nav(i){return '<button class="b" onclick="'+(i==0?'ymSel()':'step('+(i-1)+')')+'">← 前の質問に戻る</button>'}
+function step(i){
+ const s=STEPS[i],c=S.cur;let h=bar(i);
+ if(s.t=="age"){
+  h+='<div class="sec">1．対象利用者概要</div><h2>年齢</h2><input type="number" id="ag" min="0" max="130" value="'+(c.age??"")+'" placeholder="例：85"> 才<button class="b p" onclick="setAge('+i+')">次へ</button>';
+ }else if(s.t=="care"){
+  h+='<div class="sec">1．対象利用者概要</div><h2>要介護度</h2>'+CARE.map((t,k)=>'<button class="b'+(c.care==k+1?' sel':'')+'" onclick="ans('+i+','+(k+1)+')"><span class="n">'+(k+1)+'</span>'+t+'</button>').join("");
+ }else if(s.t=="a"){
+  const q=A[s.i];
+  h+='<div class="sec">2．生活・認知機能尺度</div><h2>'+q.k+'　'+q.t+'</h2><div class="note">※'+q.n+'</div>'+q.o.map((t,k)=>'<button class="b'+(c.a[s.i]==5-k?' sel':'')+'" onclick="ans('+i+','+(5-k)+')"><span class="n">'+(5-k)+'</span>'+t+'</button>').join("");
+ }else{
+  h+='<div class="sec">3．QOLの変化（WHO-5）</div><p>最近２週間、利用者の状態に最も近いものを選んでください</p><h2>'+(s.i+1)+'．'+W[s.i]+'</h2>'+SC5.map((t,k)=>'<button class="b'+(c.w[s.i]==5-k?' sel':'')+'" onclick="ans('+i+','+(5-k)+')"><span class="n">'+(5-k)+'</span>'+t+'</button>').join("");
+ }
+ show(h+nav(i));
+}
+function setAge(i){const v=parseInt($("ag").value);if(!(v>=0&&v<=130)){alert("年齢を入力してください");return}S.cur.age=v;after(i)}
+function ans(i,v){const s=STEPS[i];if(s.t=="care")S.cur.care=v;else if(s.t=="a")S.cur.a[s.i]=v;else S.cur.w[s.i]=v;after(i)}
+function after(i){if(S.fix)confirmPg();else if(i+1<STEPS.length)step(i+1);else confirmPg()}
+
+function confirmPg(){S.fix=false;const c=S.cur,u=S.users.find(x=>x.id==c.uid)||{};
+ const r=(l,v,i)=>'<tr><td class="l">'+l+'</td><td class="l">'+v+'</td><td><button class="b s" onclick="S.fix=true;step('+i+')">直す</button></td></tr>';
+ let t=r("年齢",c.age+" 才",0)+r("要介護度",CARE[c.care-1],1);
+ A.forEach((q,k)=>t+=r(q.k,c.a[k]+" 点："+esc(q.o[5-c.a[k]].slice(0,18))+"…",2+k));
+ W.forEach((q,k)=>t+=r("WHO-5 "+(k+1),c.w[k]+" 点："+SC5[5-c.w[k]],9+k));
+ show('<h2>内容の確認</h2><p><b>'+esc(u.name)+'</b>さん／'+c.ym.replace("-","年")+'月（'+fyL(fy(c.ym))+'）／'+(u.sex==1?"男":"女")+'</p><div class="tw"><table>'+t+'</table></div><p>生活・認知機能尺度 合計：<b>'+sum(c.a)+'</b> 点（7〜35）<br>WHO-5 合計：<b>'+sum(c.w)+'</b> 点（0〜25）</p><button class="b p" onclick="save()">この内容で保存する</button><button class="b" onclick="step('+(STEPS.length-1)+')">← 戻る</button>');
+}
+async function save(){const c=S.cur,key="rec:"+c.uid+"_"+c.ym;
+ const rec={uid:c.uid,ym:c.ym,date:today(),age:c.age,care:c.care,a:c.a,w:c.w};
+ show("<p>保存中…</p>");
+ try{await setKV(key,rec);S.recs[key]=rec;show('<h2>保存しました</h2><button class="b p" onclick="users()">続けて別の利用者を入力</button><button class="b" onclick="home()">ホームへ</button>')}
+ catch(e){show('<p class="err">保存に失敗しました。</p><button class="b p" onclick="save()">もう一度保存</button>')}
+}
+
+function results(){
+ const rs=Object.values(S.recs),pu={},ys=new Set();
+ rs.forEach(r=>{const n=fy(r.ym);ys.add(n);pu[r.uid]=pu[r.uid]||{};const o=pu[r.uid][n];if(!o||o.ym<r.ym)pu[r.uid][n]=r});
+ const Y=[...ys].sort((a,b)=>a-b);
+ if(!Y.length){show('<h2>結果</h2><p>まだ記録がありません。</p>'+back());return}
+ const sa=r=>sum(r.a),sw=r=>sum(r.w);
+ let h='<h2>結果</h2><p style="font-size:14px">同じ年度に複数回入力がある場合は、最新の月を使用しています。</p><h3>① 利用者ごとの年度推移</h3><div class="tw"><table><tr><th>利用者</th>'+Y.map(n=>'<th>'+fyL(n)+'</th>').join("")+'</tr>';
+ S.users.filter(u=>pu[u.id]).forEach(u=>{h+='<tr><td class="l">'+esc(u.name)+'</td>'+Y.map(n=>{const r=pu[u.id][n];return '<td>'+(r?'生活・認知 '+sa(r)+'<br>WHO-5 '+sw(r):'－')+'</td>'}).join("")+'</tr>'});
+ h+='</table></div><h3>② 施設全体の年度別平均</h3><div class="tw"><table><tr><th>年度</th><th>人数</th><th>生活・認知機能尺度<br>平均（7〜35）</th><th>WHO-5<br>平均（0〜25）</th></tr>';
+ const by={};
+ Y.forEach(n=>{by[n]=Object.values(pu).map(o=>o[n]).filter(Boolean);const l=by[n],k=l.length;h+='<tr><td>'+fyL(n)+'</td><td>'+k+'</td><td>'+(sum(l.map(sa))/k).toFixed(1)+'</td><td>'+(sum(l.map(sw))/k).toFixed(1)+'</td></tr>'});
+ h+='</table></div>';
+ const band=(ttl,B,f)=>{let x='<h3>'+ttl+'</h3><div class="tw"><table><tr><th>年度</th>'+B.map(b=>'<th>'+b[0]+'〜'+b[1]+'点</th>').join("")+'</tr>';
+  Y.forEach(n=>{x+='<tr><td>'+fyL(n)+'</td>'+B.map(b=>'<td>'+by[n].filter(r=>f(r)>=b[0]&&f(r)<=b[1]).length+'人</td>').join("")+'</tr>'});return x+'</table></div>'};
+ h+=band("③ 点数区分別人数（生活・認知機能尺度）",BA,sa)+band("③ 点数区分別人数（WHO-5）",BW,sw);
+ show(h+back());
+}
+home();
+</script></body></html>
