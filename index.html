@@ -37,7 +37,7 @@ td.l{text-align:left}
 <main><div id="app"></div></main>
 <script>
 /* ★設定：Apps ScriptのウェブアプリURLをここに1箇所だけ貼り付けます */
-const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbzIcZOc-A1nendxM6QLrevfuwNSKq8GBu2M7DRBndHXEE0e4GSh4AEE9ubg-IQPHgye/exec";
+const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyOGL_YND05DB7zDQ2XyvGh5QCREyqyYKetxhxQag53i3TRRFjgvwcEqepArlSxV7X0/exec";
 const FACILITY = "道志会 特別養護老人ホーム";
 
 const SC5=["いつも","ほとんどいつも","半分以上の期間を","半分以下の期間を","ほんのたまに","まったくない"];
@@ -87,7 +87,7 @@ function lock(fn,msg){NEXT=fn;
 async function unlock(){
  S.code=$("cd").value.trim();if(!S.code)return;
  try{await load()}
- catch(e){S.code="";lock(NEXT,e.message==="auth"?"合言葉が違います。":"通信に失敗しました。（"+esc(e.message||e)+"）");return}
+ catch(e){S.code="";lock(NEXT,e.message==="auth"?"合言葉が違います。":"通信に失敗しました。（"+esc(e.message||e)+"／版v3／URL末尾："+esc(SHEET_API_URL.slice(-14))+"）");return}
  try{sessionStorage.setItem("code",S.code)}catch(e){}
  if(NEXT)NEXT();
 }
