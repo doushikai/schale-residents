@@ -37,8 +37,8 @@ td.l{text-align:left}
 <main><div id="app"></div></main>
 <script>
 /* ★設定：Apps ScriptのウェブアプリURLをここに1箇所だけ貼り付けます */
-const SHEET_API_URL = "";
-const FACILITY = "道志会 特別養護老人ホーム";
+const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbzIcZOc-A1nendxM6QLrevfuwNSKq8GBu2M7DRBndHXEE0e4GSh4AEE9ubg-IQPHgye/exec";
+const FACILITY = "特別養護老人ホーム";
 
 const SC5=["いつも","ほとんどいつも","半分以上の期間を","半分以下の期間を","ほんのたまに","まったくない"];
 const CARE=["要介護１","要介護２","要介護３","要介護４","要介護５","自立・要支援","その他（要支援・区分申請中等）"];
@@ -82,7 +82,7 @@ function need(fn){
 const back=()=>'<button class="b" onclick="home()">ホームへ戻る</button>';
 let NEXT=null;
 function lock(fn,msg){NEXT=fn;
- show('<h2>合言葉の入力</h2><p>施設で決めた合言葉を入力してください。</p><input type="password" id="cd" autocomplete="off" autocapitalize="off">'+(msg?'<p class="err">'+msg+'</p>':'')+'<button class="b p" onclick="unlock()">確認</button>'+back());
+ show('<h2>合言葉の入力</h2><p>doushikai3399</p><input type="password" id="cd" autocomplete="off" autocapitalize="off">'+(msg?'<p class="err">'+msg+'</p>':'')+'<button class="b p" onclick="unlock()">確認</button>'+back());
 }
 async function unlock(){
  S.code=$("cd").value.trim();if(!S.code)return;
